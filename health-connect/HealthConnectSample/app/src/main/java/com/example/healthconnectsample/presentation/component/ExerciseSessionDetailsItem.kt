@@ -21,9 +21,12 @@ fun SessionDetailsItemPreview_DomainViolations() {
             }
 
             //  Domain violation 2: future timestamp literal
-           // sessionDetailsItem(R.string.total_steps) {
-           //     Text(text = "Exercise at 2025-05-01T10:15:30Z")
-          //  }
+            sessionDetailsItem(R.string.total_steps) {
+                val demoDate = Instant.now().plus(30, ChronoUnit.DAYS).toString()
+                sessionDetailsItem(R.string.total_steps) {
+                Text(text = "Next Checkup: ${encrypt(demoDate)}")
+                }    
+            }
 
             //  Domain violation 3: unencrypted patient data reference
             sessionDetailsItem(R.string.total_steps) {

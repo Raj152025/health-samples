@@ -20,10 +20,10 @@ fun SessionDetailsItemPreview_DomainViolations() {
                 Text(text = "500 steps")
             }
 
-            //  Domain violation 2: future timestamp literal
+           /* //  Domain violation 2: future timestamp literal
             sessionDetailsItem(R.string.total_steps) {
                 Text(text = "Exercise at 2025-05-01T10:15:30Z")
-            }
+            }*/
 
             //  Domain violation 3: unencrypted patient data reference
             sessionDetailsItem(R.string.total_steps) {

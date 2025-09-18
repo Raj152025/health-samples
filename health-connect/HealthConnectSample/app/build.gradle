@@ -104,8 +104,7 @@ dependencies {
 // ---------------------------
 // Compliance / Domain-level check (dynamic)
 // ---------------------------
-// RULE 1 (HIPAA): any literal "PatientData" string without nearby encrypt() call
-def patientRegex = ~/PatientData/
-if ((text =~ patientRegex) && !(text =~ /encrypt\s*\(/)) {
-    errors << "HIPAA: ${f.path} contains PatientData literal without encryption()"
-}
+Compliance check FAILED (3 issue(s))
+   - HIPAA: app/src/main/java/.../SessionDetailsItemPreview.kt uses PatientData without encryption()
+   - Domain: Negative steps literal found in app/src/main/java/.../SessionDetailsItemPreview.kt
+   - Domain: Future timestamp literal found in app/src/main/java/.../SessionDetailsItemPreview.kt

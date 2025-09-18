@@ -7,7 +7,7 @@
  *
  *      https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
+ * Unless required by applicable law or agreed to in writing,
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -64,7 +64,6 @@ android {
 }
 
 dependencies {
-
     def composeBom = platform('androidx.compose:compose-bom:2024.09.03')
     implementation(composeBom)
 
@@ -98,19 +97,14 @@ dependencies {
 
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.2"
 }
+
 // ---------------------------
 // Compliance / Domain-level check (demo)
+// This task scans Kotlin source for violations:
+//  - Unencrypted PatientData
+//  - Negative steps literals
+//  - Future timestamp literals
 // ---------------------------
-// ---------------------------
-// Compliance / Domain-level check (dynamic)
-// ---------------------------
-/*Compliance check FAILED (3 issue(s))
-   - HIPAA: app/src/main/java/.../SessionDetailsItemPreview.kt uses PatientData without encryption()
-   - Domain: Negative steps literal found in app/src/main/java/.../SessionDetailsItemPreview.kt
-   - Domain: Future timestamp literal found in app/src/main/java/.../SessionDetailsItemPreview.kt
-*/
-
-// Custom domain violation check
 task checkPatientData {
     doLast {
         def srcDir = file("src/main/java")
@@ -119,9 +113,14 @@ task checkPatientData {
         srcDir.eachFileRecurse { file ->
             if (file.name.endsWith(".kt")) {
                 def text = file.text
-                // look for unencrypted PatientData
                 if (text =~ /PatientData:/ && !(text =~ /encrypt\(/)) {
                     violations << "Domain violation in ${file}: unencrypted PatientData reference"
+                }
+                if (text =~ /-\d+\s*steps/) {
+                    violations << "Domain violation in ${file}: negative steps literal"
+                }
+                if (text =~ /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/) {
+                    violations << "Domain violation in ${file}: future timestamp literal"
                 }
             }
         }
@@ -133,6 +132,5 @@ task checkPatientData {
     }
 }
 
-// make sure it runs before build
+// Make sure it runs before build
 preBuild.dependsOn(checkPatientData)
-

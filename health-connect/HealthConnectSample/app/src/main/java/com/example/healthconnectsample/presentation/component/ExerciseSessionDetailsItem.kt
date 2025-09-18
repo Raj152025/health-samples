@@ -25,6 +25,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.healthconnectsample.R
 import com.example.healthconnectsample.presentation.theme.HealthConnectTheme
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * Displays a title and content, for use in conveying session details.
@@ -70,9 +72,9 @@ fun SessionDetailsItemPreview_DomainViolations() {
 
             //  Domain violation 2: future timestamp literal
             sessionDetailsItem(R.string.total_steps) {
-                val demoDate = Instant.now().plus(30, ChronoUnit.DAYS).toString()
-                sessionDetailsItem(R.string.total_steps) {
-                Text(text = "Next Checkup: ${encrypt(demoDate)}")
+                val safeDate = Instant.now().minus(1, ChronoUnit.DAYS).toString()
+                    Text(text = "Last Checkup: $safeDate")
+                Text(text = "Next Checkup: ${encrypt(safeDate)}")
                 }    
             }
 

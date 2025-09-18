@@ -58,3 +58,71 @@ subprojects {
         }
     }
 }
+// ---------------------------
+// Compliance / Domain-level check (demo)
+// ---------------------------
+ext.complianceCheckEnabled = project.hasProperty('complianceCheckEnabled') ? project.property('complianceCheckEnabled').toBoolean() : true
+
+task complianceCheck {
+    description = "Run demo domain/compliance checks and fail the build on violations"
+    group = "verification"
+
+    doLast {
+        if (!complianceCheckEnabled) {
+            println "Compliance check: DISABLED (use -PcomplianceCheckEnabled=false to skip)"
+            return
+        }
+
+        def errors = []
+        // scan relevant source files (java, kt, kotlin) under modules (app, feature modules, etc.)
+        def srcFiles = fileTree(dir: ".", include: [
+            "app/src/main/**/*.java",
+            "app/src/main/**/*.kt",
+            "**/src/main/**/*.java",
+            "**/src/main/**/*.kt"
+        ])
+
+        srcFiles.each { f ->
+            def text = f.getText('UTF-8')
+
+            // RULE 1 (demo HIPAA): any use of "PatientData" without calling encrypt( -> flag
+            if (text.contains("PatientData") && !text.contains("encrypt(")) {
+                errors << "HIPAA: ${f.path} uses PatientData without encryption()"
+            }
+
+            // RULE 2 (demo domain): negative steps literal present
+            if (text =~ /-\\d+\\s*\\bsteps\\b|-steps\\s*=\\s*-\\d+/i) {
+                errors << "Domain: Negative steps literal found in ${f.path}"
+            }
+
+            // RULE 3 (demo domain): future-dated literal ISO timestamp (quick heuristic)
+            if (text =~ /20\\d{2}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\dZ/) {
+                // optional: only flag if explicitly future compared to now? keep simple for demo
+                errors << "Domain: Found timestamp literal (check for future timestamps) in ${f.path}"
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            println "🚨 Compliance check FAILED (${errors.size()} issue(s))"
+            errors.each { println "   - $it" }
+            throw new GradleException("Compliance/domain errors found: " + errors.join("; "))
+        } else {
+            println "✅ Compliance check passed"
+        }
+    }
+}
+
+// Attach complianceCheck to modules' lifecycle when available
+gradle.projectsEvaluated {
+    allprojects.each { p ->
+        def preBuild = p.tasks.findByName('preBuild')
+        if (preBuild != null) {
+            preBuild.dependsOn complianceCheck
+        } else {
+            def checkTask = p.tasks.findByName('check')
+            if (checkTask != null) {
+                checkTask.dependsOn complianceCheck
+            }
+        }
+    }
+}

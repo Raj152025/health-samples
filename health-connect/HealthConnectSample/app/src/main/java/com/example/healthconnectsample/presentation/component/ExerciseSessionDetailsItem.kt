@@ -17,12 +17,12 @@ fun SessionDetailsItemPreview_DomainViolations() {
         LazyColumn {
             //  Domain violation 1: negative steps
             sessionDetailsItem(R.string.total_steps) {
-                Text(text = "-500 steps")
+                Text(text = "500 steps")
             }
 
             //  Domain violation 2: future timestamp literal
             sessionDetailsItem(R.string.total_steps) {
-                Text(text = "Exercise at 2035-05-01T10:15:30Z")
+                Text(text = "Exercise at 2025-05-01T10:15:30Z")
             }
 
             //  Domain violation 3: unencrypted patient data reference

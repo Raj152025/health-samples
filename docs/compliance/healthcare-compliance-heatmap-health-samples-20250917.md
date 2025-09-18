@@ -13,5 +13,5 @@ Here’s the **Markdown heatmap template** you should paste into:
 | FDA      | Devices/Trials | Medical device cybersecurity        | Partial   | 2     | High  | Eng Team     | Apply FDA premarket cybersecurity guidance               | 2026-01-31 | docs/device/security.md |
 ```
 
-👉 Save this file as `docs/compliance/healthcare-compliance-heatmap-health-samples-20250917.md` inside your repo branch.
+
 

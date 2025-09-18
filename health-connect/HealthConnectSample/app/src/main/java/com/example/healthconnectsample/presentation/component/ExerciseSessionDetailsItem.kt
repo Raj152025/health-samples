@@ -76,3 +76,9 @@ fun SessionDetailsItemPreview() {
         }
     }
 }
+
+// Simple demo encryption function (NOT secure, just for illustration)
+fun encrypt(input: String): String {
+    return input.reversed() + "_enc"
+}
+

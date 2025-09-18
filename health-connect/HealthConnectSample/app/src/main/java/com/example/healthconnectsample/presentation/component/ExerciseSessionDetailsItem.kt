@@ -54,3 +54,25 @@ fun SessionDetailsItemPreview() {
         }
     }
 }
+@Preview
+@Composable
+fun SessionDetailsItemPreview() {
+    HealthConnectTheme {
+        LazyColumn {
+            //  Domain violation 1: negative steps (not realistic in exercise data)
+            sessionDetailsItem(R.string.total_steps) {
+                Text(text = "-500 steps")
+            }
+
+            //  Domain violation 2: future timestamp literal (for compliance rule)
+            sessionDetailsItem(R.string.total_steps) {
+                Text(text = "Exercise at 2035-05-01T10:15:30Z")
+            }
+
+            //  Domain violation 3: unencrypted patient data reference
+            sessionDetailsItem(R.string.total_steps) {
+                Text(text = "PatientData: John Doe") // missing encrypt()
+            }
+        }
+    }
+}

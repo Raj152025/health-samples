@@ -71,7 +71,10 @@ fun SessionDetailsItemPreview() {
 
             //  Domain violation 3: unencrypted patient data reference
             sessionDetailsItem(R.string.total_steps) {
-                Text(text = "PatientData: John Doe") // missing encrypt()
+                // Text(text = "PatientData: John Doe") // missing encrypt()
+
+                 val encryptedName = encrypt("John Doe")
+                Text(text = "PatientData: $encryptedName")
             }
         }
     }

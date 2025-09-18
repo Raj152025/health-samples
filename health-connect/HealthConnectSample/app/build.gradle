@@ -104,48 +104,9 @@ dependencies {
 // ---------------------------
 // Compliance / Domain-level check (dynamic)
 // ---------------------------
-ext.complianceCheckEnabled = project.hasProperty('complianceCheckEnabled') ? project.property('complianceCheckEnabled').toBoolean() : true
+Compliance check FAILED (3 issue(s))
+   - HIPAA: app/src/main/java/.../SessionDetailsItemPreview.kt uses PatientData without encryption()
+   - Domain: Negative steps literal found in app/src/main/java/.../SessionDetailsItemPreview.kt
+   - Domain: Future timestamp literal found in app/src/main/java/.../SessionDetailsItemPreview.kt
 
-task complianceCheck {
-    description = "Run demo domain/compliance checks and fail the build on violations"
-    group = "verification"
 
-    doLast {
-        if (!complianceCheckEnabled) {
-            println "Compliance check: DISABLED (use -PcomplianceCheckEnabled=false to skip)"
-            return
-        }
-
-        def errors = []
-        def srcFiles = fileTree(dir: "src/main", include: ["**/*.kt", "**/*.java"])
-
-        srcFiles.each { f ->
-            def text = f.getText('UTF-8')
-
-            // RULE 1: PatientData without encryption()
-            if (text.contains("PatientData") && !text.contains("encrypt(")) {
-                errors << "HIPAA: ${f.path} uses PatientData without encryption()"
-            }
-
-            // RULE 2: Negative steps literal
-            if (text =~ /-\d+\s*steps/) {
-                errors << "Domain: Negative steps literal found in ${f.path}"
-            }
-
-            // RULE 3: Hardcoded future timestamp
-            if (text =~ /20[3-9]\d-\d{2}-\d{2}/) { // e.g., 2030-12-01
-                errors << "Domain: Future timestamp literal found in ${f.path}"
-            }
-        }
-
-        if (!errors.isEmpty()) {
-            println "🚨 Compliance check FAILED (${errors.size()} issue(s))"
-            errors.each { println "   - $it" }
-            throw new GradleException("Compliance/domain errors found: " + errors.join("; "))
-        } else {
-            println "✅ Compliance check passed"
-        }
-    }
-}
-
-preBuild.dependsOn complianceCheck

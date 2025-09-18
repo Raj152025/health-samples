@@ -91,9 +91,13 @@ task complianceCheck {
             }
 
             // RULE 2 (demo domain): negative steps literal present
-            if (text =~ /-\\d+\\s*\\bsteps\\b|-steps\\s*=\\s*-\\d+/i) {
+            
+
+            def negativeSteps = ~/(?i)-\d+\s*steps\b|-steps\s*=\s*-\d+/
+            if (text =~ negativeSteps) {
                 errors << "Domain: Negative steps literal found in ${f.path}"
             }
+
 
             // RULE 3 (demo domain): future-dated literal ISO timestamp (quick heuristic)
             if (text =~ /20\\d{2}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\dZ/) {

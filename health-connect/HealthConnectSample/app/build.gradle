@@ -102,7 +102,7 @@ dependencies {
 // Compliance / Domain-level check (demo)
 // ---------------------------
 // ---------------------------
-// Compliance / Domain-level check (demo)
+// Compliance / Domain-level check (dynamic)
 // ---------------------------
 ext.complianceCheckEnabled = project.hasProperty('complianceCheckEnabled') ? project.property('complianceCheckEnabled').toBoolean() : true
 
@@ -117,13 +117,26 @@ task complianceCheck {
         }
 
         def errors = []
+        def srcFiles = fileTree(dir: "src/main", include: ["**/*.kt", "**/*.java"])
 
-        // ---------------------------
-        // DEMO: Inject a guaranteed violation
-        // ---------------------------
-        errors << "HIPAA: Demo violation – PatientData without encryption()"
-        errors << "Domain: Demo violation – Negative steps literal found"
-        errors << "Domain: Demo violation – Future timestamp literal found"
+        srcFiles.each { f ->
+            def text = f.getText('UTF-8')
+
+            // RULE 1: PatientData without encryption()
+            if (text.contains("PatientData") && !text.contains("encrypt(")) {
+                errors << "HIPAA: ${f.path} uses PatientData without encryption()"
+            }
+
+            // RULE 2: Negative steps literal
+            if (text =~ /-\d+\s*steps/) {
+                errors << "Domain: Negative steps literal found in ${f.path}"
+            }
+
+            // RULE 3: Hardcoded future timestamp
+            if (text =~ /20[3-9]\d-\d{2}-\d{2}/) { // e.g., 2030-12-01
+                errors << "Domain: Future timestamp literal found in ${f.path}"
+            }
+        }
 
         if (!errors.isEmpty()) {
             println "🚨 Compliance check FAILED (${errors.size()} issue(s))"
@@ -135,5 +148,4 @@ task complianceCheck {
     }
 }
 
-// Attach complianceCheck explicitly to preBuild
 preBuild.dependsOn complianceCheck

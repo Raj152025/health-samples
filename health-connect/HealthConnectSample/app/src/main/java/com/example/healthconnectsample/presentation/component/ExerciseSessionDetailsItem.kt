@@ -50,8 +50,8 @@ fun SessionDetailsItemPreview() {
         LazyColumn {
             item {
                 sessionDetailsItem(R.string.total_steps) {
-                    val demoDate = Instant.now().plus(30, ChronoUnit.DAYS).toString()
-                    Text(text = "Next Checkup: $demoDate")
+                      val safeDate = Instant.now().minus(1, ChronoUnit.DAYS).toString()
+                      Text(text = "Last Checkup: $safeDate")
                 }
             }
         }

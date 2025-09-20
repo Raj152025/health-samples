@@ -1,18 +1,3 @@
-/*
- * Copyright 2024 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.example.healthconnectsample.presentation.component
 
 import androidx.annotation.StringRes
@@ -28,9 +13,6 @@ import com.example.healthconnectsample.presentation.theme.HealthConnectTheme
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-/**
- * Displays a title and content, for use in conveying session details.
- */
 fun LazyListScope.sessionDetailsItem(
     @StringRes labelId: Int,
     content: @Composable () -> Unit
@@ -47,67 +29,24 @@ fun LazyListScope.sessionDetailsItem(
 
 @Preview
 @Composable
-fun SessionDetailsItemPreview() {
-    HealthConnectTheme {
-        LazyColumn {
-            sessionDetailsItem(R.string.total_steps) {
-                val safeDate = Instant.now().minus(1, ChronoUnit.DAYS).toString()
-                Text(text = "Last Checkup: $safeDate")
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
 fun SessionDetailsItemPreview_DomainViolations() {
     HealthConnectTheme {
         LazyColumn {
-            // Domain violation 1: negative steps
+            // ❌ Negative steps
             sessionDetailsItem(R.string.total_steps) {
-                Text(text = "500 steps") // ❌ Negative value
+                Text(text = "-500 steps")
             }
 
-            // Domain violation 2: future timestamp literal
+            // ❌ Future timestamp
             sessionDetailsItem(R.string.total_steps) {
                 val futureDate = Instant.now().plus(30, ChronoUnit.DAYS).toString()
-                Text(text = "Next Checkup: $futureDate") // ❌ Future date
+                Text(text = "Next Checkup: $futureDate")
             }
 
-            // Domain violation 3: unencrypted patient data reference
+            // ❌ Unencrypted patient data
             sessionDetailsItem(R.string.total_steps) {
-                Text(text = "PatientData: John Doe") // ❌ Unencrypted
+                Text(text = "PatientData: John Doe")
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun SessionDetailsItemPreview_Fixes() {
-    HealthConnectTheme {
-        LazyColumn {
-            // ✅ Fixed negative steps
-            sessionDetailsItem(R.string.total_steps) {
-                Text(text = "500 steps")
-            }
-
-            // ✅ Fixed timestamp (use past date, encrypted)
-            sessionDetailsItem(R.string.total_steps) {
-                val safeDate = Instant.now().minus(1, ChronoUnit.DAYS).toString()
-                Text(text = "Last Checkup: ${encrypt(safeDate)}")
-            }
-
-            // ✅ Fixed encrypted patient data
-            sessionDetailsItem(R.string.total_steps) {
-                val encryptedName = encrypt("John Doe")
-                Text(text = "PatientData: $encryptedName")
-            }
-        }
-    }
-}
-
-// Simple demo encryption function (NOT secure, just for illustration)
-fun encrypt(input: String): String {
-    return input.reversed() + "_enc"
 }

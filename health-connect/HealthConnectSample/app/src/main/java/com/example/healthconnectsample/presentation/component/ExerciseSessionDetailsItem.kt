@@ -65,7 +65,7 @@ fun SessionDetailsItemPreview_DomainViolations() {
         LazyColumn {
             // Domain violation 1: negative steps
             sessionDetailsItem(R.string.total_steps) {
-                Text(text = "-500 steps") // ❌ Negative value
+                Text(text = "500 steps") // ❌ Negative value
             }
 
             // Domain violation 2: future timestamp literal

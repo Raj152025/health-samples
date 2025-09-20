@@ -1,6 +1,6 @@
 /*
  * Copyright 2024 The Android Open Source Project
- **
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -50,11 +50,9 @@ fun LazyListScope.sessionDetailsItem(
 fun SessionDetailsItemPreview() {
     HealthConnectTheme {
         LazyColumn {
-            item {
-                sessionDetailsItem(R.string.total_steps) {
-                      val safeDate = Instant.now().minus(1, ChronoUnit.DAYS).toString()
-                      Text(text = "Last Checkup: $safeDate")
-                }
+            sessionDetailsItem(R.string.total_steps) {
+                val safeDate = Instant.now().minus(1, ChronoUnit.DAYS).toString()
+                Text(text = "Last Checkup: $safeDate")
             }
         }
     }
@@ -65,22 +63,44 @@ fun SessionDetailsItemPreview() {
 fun SessionDetailsItemPreview_DomainViolations() {
     HealthConnectTheme {
         LazyColumn {
-            //  Domain violation 1: negative steps
+            // Domain violation 1: negative steps
+            sessionDetailsItem(R.string.total_steps) {
+                Text(text = "-500 steps") // ❌ Negative value
+            }
+
+            // Domain violation 2: future timestamp literal
+            sessionDetailsItem(R.string.total_steps) {
+                val futureDate = Instant.now().plus(30, ChronoUnit.DAYS).toString()
+                Text(text = "Next Checkup: $futureDate") // ❌ Future date
+            }
+
+            // Domain violation 3: unencrypted patient data reference
+            sessionDetailsItem(R.string.total_steps) {
+                Text(text = "PatientData: John Doe") // ❌ Unencrypted
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun SessionDetailsItemPreview_Fixes() {
+    HealthConnectTheme {
+        LazyColumn {
+            // ✅ Fixed negative steps
             sessionDetailsItem(R.string.total_steps) {
                 Text(text = "500 steps")
             }
 
-            //  Domain violation 2: future timestamp literal
+            // ✅ Fixed timestamp (use past date, encrypted)
             sessionDetailsItem(R.string.total_steps) {
                 val safeDate = Instant.now().minus(1, ChronoUnit.DAYS).toString()
-                    Text(text = "Last Checkup: $safeDate")
-                Text(text = "Next Checkup: ${encrypt(safeDate)}")
-                }    
+                Text(text = "Last Checkup: ${encrypt(safeDate)}")
             }
 
-            //  Domain violation 3: unencrypted patient data reference
+            // ✅ Fixed encrypted patient data
             sessionDetailsItem(R.string.total_steps) {
-                val encryptedName = encrypt("John Doe") // simulate fixed case
+                val encryptedName = encrypt("John Doe")
                 Text(text = "PatientData: $encryptedName")
             }
         }
@@ -90,22 +110,4 @@ fun SessionDetailsItemPreview_DomainViolations() {
 // Simple demo encryption function (NOT secure, just for illustration)
 fun encrypt(input: String): String {
     return input.reversed() + "_enc"
-}
-
-@Preview
-@Composable
-fun SessionDetailsItemPreview_Unencrypted() {
-    // ❌ Domain violation
-    sessionDetailsItem(R.string.total_steps) {
-        Text(text = "PatientData: John Doe")
-    }
-}
-
-@Preview
-@Composable
-fun SessionDetailsItemPreview_Encrypted() {
-    // ✅ Fixed with encryption
-    sessionDetailsItem(R.string.total_steps) {
-        Text(text = encrypt("John Doe"))
-    }
 }

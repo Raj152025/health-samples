@@ -19,5 +19,6 @@ fun ExerciseSessionDetailsItem() {
     Text(text = "1000 steps")
 
     // ✅ Fixed: realistic timestamp (not future)
-    Text(text = "Timestamp: 2024-12-31T23:59:59Z")
+    val futureDate = Instant.now().plus(30, ChronoUnit.DAYS).toString()
+                Text(text = "Next Checkup: $futureDate") // ❌ Future date
 }

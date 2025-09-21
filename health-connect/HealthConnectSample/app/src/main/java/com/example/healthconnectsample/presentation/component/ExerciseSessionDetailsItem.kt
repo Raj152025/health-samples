@@ -27,29 +27,25 @@ fun LazyListScope.sessionDetailsItem(
     }
 }
 
-// Simple demo encryption function (NOT secure)
-fun encrypt(input: String): String = input.reversed() + "_enc"
-
 @Preview
 @Composable
-fun SessionDetailsItemPreview_Fixes() {
+fun SessionDetailsItemPreview_DomainViolations() {
     HealthConnectTheme {
         LazyColumn {
-            // ✅ Valid steps
+            //  Negative steps
             sessionDetailsItem(R.string.total_steps) {
-                Text(text = "500 steps")
+                Text(text = "-500 steps")
             }
 
-            // ✅ Past timestamp, encrypted
+            //  Future timestamp
             sessionDetailsItem(R.string.total_steps) {
-                val safeDate = Instant.now().minus(1, ChronoUnit.DAYS).toString()
-                Text(text = "Last Checkup: ${encrypt(safeDate)}")
+                val futureDate = Instant.now().plus(30, ChronoUnit.DAYS).toString()
+                Text(text = "Next Checkup: $futureDate")
             }
 
-            // ✅ Encrypted patient data
+            //  Unencrypted patient data
             sessionDetailsItem(R.string.total_steps) {
-                val encryptedName = encrypt("John Doe")
-                Text(text = "PatientData: $encryptedName")
+                Text(text = "PatientData: John Doe")
             }
         }
     }

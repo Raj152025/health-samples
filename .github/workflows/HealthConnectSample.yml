@@ -69,11 +69,18 @@ jobs:
             cat logs/last_100.log
             echo "::endgroup::"
 
+            ERROR_JSON=$(jq -n \
+            --arg problem "ERROR: Domain violation in $PWD/app/src/main/java/com/example/healthconnectsample/presentation/component/ExerciseSessionDetailsItem.kt: unencrypted PatientData reference" \
+            --arg log "$ERROR_LOG" \
+            --argjson context '{"domain":"healthcare","component":"patient"}' \
+            --argjson metadata '{"severity":"high"}' \
+              '{problem: $problem, log: $log, context: $context, metadata: $metadata}')
+
             # Call API using GitHub secrets
             RESPONSE=$(curl -s -u "${{ secrets.ASDF_CLIENT_ID }}:${{ secrets.ASDF_CLIENT_SECRET }}" \
               -X POST https://trace-api.azurewebsites.net/api/projects/${{ secrets.PROJECT_ID }}/solve \
               -H "Content-Type: application/json" \
-              -d "{\"job\":\"build\", \"branch\":\"$GITHUB_REF\", \"commit\":\"$GITHUB_SHA\", \"log\":\"$ERROR_LOG\"}")
+              -d "$ERROR_JSON")
 
             # Show API response inline
             echo "::group::Failure Analysis Result"

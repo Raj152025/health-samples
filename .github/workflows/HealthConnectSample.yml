@@ -18,9 +18,7 @@ env:
 
 jobs:
   build:
-    # Skip build if head commit contains 'skip ci'
     if: ${{ !contains(github.event.head_commit.message, 'skip ci') }}
-
     runs-on: ubuntu-latest
     timeout-minutes: 40
 
@@ -28,18 +26,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: set up JDK
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: 17
 
-      - name: Unit Tests
-        uses: gradle/gradle-build-action@v3
-        with:
-          build-root-directory: ${{ env.SAMPLE_PATH }}
-          arguments: testDebug
+      # Run unit tests and capture full log
+      - name: Run Unit Tests
+        run: |
+          mkdir -p logs
+          ./gradlew testDebug > logs/build.log 2>&1
+        working-directory: ${{ env.SAMPLE_PATH }}
+        continue-on-error: true
 
+      # Upload test results and reports
       - name: Upload test results and reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -49,3 +50,34 @@ jobs:
             **/build/test-results/*
             **/build/reports/*
             **/out/*
+
+      # Analyze build failures and call API
+      - name: Analyze build failure and call API
+        if: always()
+        working-directory: ${{ env.SAMPLE_PATH }}
+        run: |
+          # Only run if build.log exists
+          if [ -f logs/build.log ]; then
+            # Get last 100 lines
+            tail -n 100 logs/build.log > logs/last_100.log
+            ERROR_LOG=$(awk '{printf "%s\\n", $0}' logs/last_100.log)
+
+            # Call API with client ID & secret from GitHub secrets
+            RESPONSE=$(curl -s -u "${{ secrets.ASDF_CLIENT_ID }}:${{ secrets.ASDF_CLIENT_SECRET }}" \
+              -X POST https://trace-api.azurewebsites.net/api/projects/${{ secrets.PROJECT_ID }}/solve \
+              -H "Content-Type: application/json" \
+              -d "{\"job\":\"build\", \"branch\":\"$GITHUB_REF\", \"commit\":\"$GITHUB_SHA\", \"log\":\"$ERROR_LOG\"}")
+
+            # Display API response in collapsible group
+            echo "::group::Failure Analysis Result"
+            echo "$RESPONSE"
+            echo "::endgroup::"
+
+            # Annotate solutions inline (optional)
+            SOLUTIONS=$(echo "$RESPONSE" | jq -r '.solutions[]?')
+            for line in $SOLUTIONS; do
+              echo "::error file=logs/build.log,line=1,col=1::$line"
+            done
+          else
+            echo "No build.log found; skipping API call"
+          fi

@@ -28,6 +28,30 @@ jobs:
         run: chmod +x ./gradlew
         working-directory: health-connect/HealthConnectSample
 
+      # Run build and capture all output
       - name: Build HealthConnectSample app
         working-directory: health-connect/HealthConnectSample
-        run: ./gradlew app:assembleDebug
+        run: |
+          ./gradlew app:assembleDebug > build.log 2>&1
+        continue-on-error: true
+
+      # Analyze failures and call API
+      - name: Analyze build failure and show solution
+        if: failure()
+        working-directory: health-connect/HealthConnectSample
+        run: |
+          # Extract last 100 lines of log
+          tail -n 100 build.log > last_100.log
+
+          # Convert log to JSON-friendly string
+          ERROR_LOG=$(awk '{printf "%s\\n", $0}' last_100.log)
+
+          # Call your API
+          RESPONSE=$(curl -s -X POST https://trace-api.azurewebsites.net/api/projects/e9a92f43-1d55-435e-9386-415de54c55b6/solve \
+            -H "Content-Type: application/json" \
+            -d "{\"job\":\"build\", \"branch\":\"$GITHUB_REF\", \"commit\":\"$GITHUB_SHA\", \"log\":\"$ERROR_LOG\"}")
+
+          # Display response in logs
+          echo "::group::Failure Analysis Result"
+          echo "$RESPONSE"
+          echo "::endgroup::"

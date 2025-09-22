@@ -18,80 +18,34 @@ env:
 
 jobs:
   build:
+    # Skip build if head commit contains 'skip ci'
     if: ${{ !contains(github.event.head_commit.message, 'skip ci') }}
+
     runs-on: ubuntu-latest
     timeout-minutes: 40
 
     steps:
-      # 1️⃣ Checkout code
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up JDK
-      - name: Set up JDK
+      - name: set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: 17
 
-      # 3️⃣ Run Gradle build & tests and capture logs
-      - name: Run Unit Tests and Build
-        working-directory: ${{ env.SAMPLE_PATH }}
-        run: |
-          mkdir -p logs
-          ./gradlew testDebug app:assembleDebug > logs/build.log 2>&1
-        continue-on-error: true
+      - name: Unit Tests
+        uses: gradle/gradle-build-action@v3
+        with:
+          build-root-directory: ${{ env.SAMPLE_PATH }}
+          arguments: testDebug
 
-      # 4️⃣ Upload test results and logs as artifacts
-      - name: Upload build artifacts
+      - name: Upload test results and reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
+          name: build-results
           path: |
-            logs/
             **/build/test-results/*
             **/build/reports/*
             **/out/*
-
-      # 5️⃣ Analyze failures, call API, display response
-      - name: Analyze build failure and call API
-        if: always()
-        working-directory: ${{ env.SAMPLE_PATH }}
-        run: |
-          if [ -f logs/build.log ]; then
-            # Extract last 100 lines
-            tail -n 100 logs/build.log > logs/last_100.log
-            ERROR_LOG=$(awk '{printf "%s\\n", $0}' logs/last_100.log)
-
-            # Display last 100 lines inline
-            echo "::group::Last 100 lines of build log"
-            cat logs/last_100.log
-            echo "::endgroup::"
-
-            ERROR_JSON=$(jq -n \
-            --arg problem "ERROR: Domain violation in $PWD/app/src/main/java/com/example/healthconnectsample/presentation/component/ExerciseSessionDetailsItem.kt: unencrypted PatientData reference" \
-            --arg log "$ERROR_LOG" \
-            --argjson context '{"domain":"healthcare","component":"patient"}' \
-            --argjson metadata '{"severity":"high"}' \
-              '{problem: $problem, log: $log, context: $context, metadata: $metadata}')
-
-            # Call API using GitHub secrets
-            RESPONSE=$(curl -s -u "${{ secrets.ASDF_CLIENT_ID }}:${{ secrets.ASDF_CLIENT_SECRET }}" \
-              -X POST https://trace-api.azurewebsites.net/api/projects/${{ secrets.PROJECT_ID }}/solve \
-              -H "Content-Type: application/json" \
-              -d "$ERROR_JSON")
-
-            # Show API response inline
-            echo "::group::Failure Analysis Result"
-            echo "$RESPONSE"
-            echo "::endgroup::"
-
-            # Annotate solutions inline (optional)
-            SOLUTIONS=$(echo "$RESPONSE" | jq -r '.solutions[]?')
-            for line in $SOLUTIONS; do
-              echo "::error file=logs/build.log,line=1,col=1::$line"
-            done
-          else
-            echo "No build.log found; skipping API call"
-          fi
